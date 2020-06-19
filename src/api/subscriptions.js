@@ -272,6 +272,27 @@ export class Subscriptions {
    */
   getPropensityModule() {}
 
+  /**
+   * @return {boolean}
+   */
+  isGoogleAppLoginFlowActive() {}
+
+  /**
+   * @return {boolean}
+   */
+  isGoogleAppLoginFlowRequired() {}
+
+  /**
+   * @param {string} loginUrl
+   * @return {!Promise<!{userId: string, userAttributes: Array<string>}>}
+   */
+  startGoogleAppLoginFlow(loginUrl) {}
+
+  /**
+   * @param {!{userId: string, userAttributes: Array<string>}} userState
+   */
+  googleAppLoginFlowComplete(userState) {}
+
   /** @return {!Promise<LoggerApi>} */
   getLogger() {}
 }
