@@ -109,11 +109,12 @@ export class EntitlementsManager {
 
   /**
    * @param {?string=} encryptedDocumentKey
+   * @param {?{userId: string, userAttributes: Array<string>}=} userState
    * @return {!Promise<!Entitlements>}
    */
-  getEntitlements(encryptedDocumentKey) {
+  getEntitlements(encryptedDocumentKey, userState) {
     if (!this.responsePromise_) {
-      this.responsePromise_ = this.getEntitlementsFlow_(encryptedDocumentKey);
+      this.responsePromise_ = this.getEntitlementsFlow_(encryptedDocumentKey, userState);
     }
     return this.responsePromise_.then((response) => {
       if (response.isReadyToPay != null) {
@@ -143,11 +144,12 @@ export class EntitlementsManager {
 
   /**
    * @param {?string=} encryptedDocumentKey
+   * @param {?{userId: string, userAttributes: Array<string>}=} userState
    * @return {!Promise<!Entitlements>}
    * @private
    */
-  getEntitlementsFlow_(encryptedDocumentKey) {
-    return this.fetchEntitlementsWithCaching_(encryptedDocumentKey).then(
+  getEntitlementsFlow_(encryptedDocumentKey, userState) {
+    return this.fetchEntitlementsWithCaching_(encryptedDocumentKey, userState).then(
       (entitlements) => {
         this.onEntitlementsFetched_(entitlements);
         return entitlements;
@@ -157,10 +159,11 @@ export class EntitlementsManager {
 
   /**
    * @param {?string=} encryptedDocumentKey
+   * @param {?{userId: string, userAttributes: Array<string>}=} userState
    * @return {!Promise<!Entitlements>}
    * @private
    */
-  fetchEntitlementsWithCaching_(encryptedDocumentKey) {
+  fetchEntitlementsWithCaching_(encryptedDocumentKey, userState) {
     return Promise.all([
       this.storage_.get(ENTS_STORAGE_KEY),
       this.storage_.get(IS_READY_TO_PAY_STORAGE_KEY),
@@ -178,6 +181,21 @@ export class EntitlementsManager {
           // Already have a positive response.
           this.positiveRetries_ = 0;
           return cached;
+        }
+      }
+      // PROTOTYPE CODE
+      if (userState && userState.userAttributes.includes('registered')) {
+        const reads = parseInt(localStorage.getItem(userState.userId) || '0', 10);
+        console.log(`${reads} postseason reads`);
+        if (reads < 3) {
+          return this.createEntitlements_('postseason', [
+            {
+              source: 'google-postseason',
+              products: [this.pageConfig_.getProductId()],
+              subscriptionToken: '',
+              userState,
+            }
+          ]);
         }
       }
       // If cache didn't match, perform fetch.

@@ -178,6 +178,14 @@ export class Entitlements {
   ack() {
     this.ackHandler_(this);
   }
+
+  consume() {
+    // PROTOTYPE CODE
+    console.log('entitlement consumed');
+    const userId = this.getEntitlementForThis().userState.userId;
+    const reads = parseInt(localStorage.getItem(userId) || '0', 10);
+    localStorage.setItem(userId, '' + (reads + 1));
+  }
 }
 
 /**
@@ -188,14 +196,17 @@ export class Entitlement {
    * @param {string} source
    * @param {!Array<string>} products
    * @param {string} subscriptionToken
+   * @param {?{userId: string, userAttributes: Array<string>}=} userState
    */
-  constructor(source, products, subscriptionToken) {
+  constructor(source, products, subscriptionToken, userState) {
     /** @const {string} */
     this.source = source;
     /** @const {!Array<string>} */
     this.products = products;
     /** @const {string} */
     this.subscriptionToken = subscriptionToken;
+    /** @const {?{userId: string, userAttributes: Array<string>}} */
+    this.userState = userState || null;
   }
 
   /**
@@ -205,7 +216,8 @@ export class Entitlement {
     return new Entitlement(
       this.source,
       this.products.slice(0),
-      this.subscriptionToken
+      this.subscriptionToken,
+      this.userState
     );
   }
 
@@ -217,6 +229,7 @@ export class Entitlement {
       'source': this.source,
       'products': this.products,
       'subscriptionToken': this.subscriptionToken,
+      'userState': this.userState,
     };
   }
 
@@ -250,7 +263,8 @@ export class Entitlement {
     const source = json['source'] || '';
     const products = json['products'] || [];
     const subscriptionToken = json['subscriptionToken'];
-    return new Entitlement(source, products, subscriptionToken);
+    const userState = json['userState'];
+    return new Entitlement(source, products, subscriptionToken, userState);
   }
 
   /**
